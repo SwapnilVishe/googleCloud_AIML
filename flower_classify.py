@@ -1,34 +1,45 @@
-# -*- coding: utf-8 -*-
-import numpy as np
-import pandas as pd
-
-from sklearn import metrics
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-
-data = pd.read_csv("data/Iris.csv")
-
-data.head()
-data['Species'].value_counts()
-
-X = data.drop(['Id', 'Species'], axis=1)
-y = data['Species']
-
-X_train, X_test, y_train, y_test = train_test_split(X,y , test_size = 0.2)
-
-model = LogisticRegression()
-model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
-print(metrics.accuracy_score(y_test, y_pred))
-model.predict(np.array([[2,3,4,5]]))
-
-
 import pickle
-pickle.dump(model, open("flower-v1.pkl", "wb"))
-model_pk = pickle.load(open("flower-v1.pkl", "rb"))
-model_pk.predict(np.array([[2,3,4,5]]))
+import numpy as np
 
-import joblib
-joblib.dump(model, open("flower-v1.jl", "wb"))
-model_jl = joblib.load(open("flower-v1.pkl", "rb"))
-model_jl.predict(np.array([[2,3,4,5]]))
+app = Flask(__name__)
+
+# http://localhost:5000/api_predict
+model_pk = pickle.load(open("flower-v1.pkl", "rb"))
+
+@app.route('/api_predict', methods=["GET", "POST"])
+def api_predict():
+    if request.method == "GET":
+        return "Please send Post Request"
+    elif request.method == "POST":
+        data = request.get_json()
+        
+        sepal_length = data['sepal_length'] 
+        sepal_width = data["sepal_width"]
+        petal_length = data["petal_length"]
+        petal_width = data["petal_width"]
+        
+        in1 = np.array([[sepal_length, sepal_width , petal_length, petal_width]])
+        
+        prediction = model_pk.predict(in1)
+        
+        return str(prediction)
+    
+app.run()
+
+'''
+import requests
+
+url = "http://localhost:5000/api_predict"
+data = {
+        "sepal_length" : 10,
+        "sepal_width":0.1,
+         "petal_length":0,
+         "petal_width":10
+        
+        }
+
+r = requests.post(url, json = data)
+print(r)
+print(r.text)
+
+'''
